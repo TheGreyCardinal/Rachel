@@ -50,9 +50,79 @@
       {
        res = { "type": range.name,
                "start": start,
-               "end": end + range.end.length,
+               "end": end + range.end.length
              };
       }
+    }
+
+   return res;
+  }
+
+
+/* Правило-линия.
+   Описывает фрагмент из заданных символов.
+
+   Пример:
+    Входная строка: 12221348.
+    Массив символов: ["1", "2"].
+    Описываемый фрагмент: 12221.
+
+   Структура:
+    type - тип правила, обязателен для всех правил.
+    list - массив с символами
+    name - метка для найденного фрагмента.
+*/
+
+/* В данном случае, описан синтаксис комментария.
+*/
+ var rule_line = { "type": "line",
+                   "list": [" ", "\n", "\r", "\r\n", "\t"],
+                   "name": "whitespace"
+                 };
+
+
+/* Находит первое вхождение фрагмента из заданных символов.
+
+   Возвращает объект со следующими данными:
+    type - тип найденного фрагмента.
+    start - индекс первого символа из найденного фрагмента.
+    end - индекс последнего символа из найденного фрагмента.
+
+   Если фрагмент не найден - возвращает false.
+*/
+ function get_line(input, line)
+  {
+   var start;
+   var end;
+   var res = false;
+
+   for (var i = 0; i < line.list.length; i++)
+    {
+     var tmp = input.indexOf(line.list[i]);
+
+     if (tmp !== -1)
+      {
+       if ((start > tmp) || (typeof start == "undefined"))
+        {
+         start = tmp;
+        }
+      }
+    }
+   i = undefined;
+
+   if (typeof start !== "undefined")
+    {
+     end = start;
+
+     while (line.list.indexOf(input[end + 1]) !== -1)
+      {
+       end++;
+      }
+
+     res = { "type": line.name,
+             "start": start,
+             "end": end
+           };
     }
 
    return res;
