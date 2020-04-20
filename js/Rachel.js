@@ -128,3 +128,75 @@
    return res;
   }
 
+/* Вставляет найденный токен в дерево.
+
+   tree - массив объектов.
+   old_token - индекс старого токена.
+   insert_token - вставляемый токен. Разбивает старый на части.
+
+   Изменяет дерево, ничего не возвращает.
+*/
+ function insert_token(tree, old_token, insert_token)
+  {
+   var old_start = tree[old_token].start;
+   var old_end = tree[old_token].end;
+   var res = [];
+
+   if ((old_start > insert_token.start)
+       || (old_end < insert_token.end)
+      )
+    {
+     return false;
+    }
+
+   if (old_start == insert_token.start)
+    {
+     res.push({ "type": insert_token.type,
+                "start": insert_token.start,
+                "end": insert_token.end
+              });
+
+     res.push({ "type": tree[old_token].type,
+                "start": insert_token.end + 1,
+                "end": old_end
+              });
+    }
+   else if (old_end == insert_token.end)
+    {
+     res.push({ "type": tree[old_token].type,
+                "start": old_start,
+                "end": insert_token.start - 1
+              });
+
+     res.push({ "type": insert_token.type,
+                "start": insert_token.start,
+                "end": old_end
+              });
+    }
+   else
+    {
+     res.push({ "type": tree[old_token].type,
+                "start": old_start,
+                "end": insert_token.start - 1
+              });
+
+     res.push({ "type": insert_token.type,
+                "start": insert_token.start,
+                "end": insert_token.end
+              });
+
+     res.push({ "type": tree[old_token].type,
+                "start": insert_token.end + 1,
+                "end": old_end
+              });
+    }
+
+   tree.splice(old_token, 1);
+
+   for (var i = 0; i < res.length; i++)
+    {
+     tree.splice(old_token + i, 0, res[i]);
+    }
+   i = undefined;
+  }
+
