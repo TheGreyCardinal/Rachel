@@ -25,7 +25,7 @@
                   };
 
 
-/* Находит первое вхождение диапазона range в строку input.
+/* Находит первое вхождение диапазона range в строку, описываемую token.
 
    Возвращает объект со следующими данными:
     type - тип найденного фрагмента.
@@ -34,23 +34,24 @@
 
    Если фрагмент не найден - возвращает false.
 */
- function get_range(input, range)
+ function get_range(input, token, range)
   {
    var start;
    var end;
+   var content = input.substring(token.start, token.end);
    var res = false;
 
-   start = input.indexOf(range.start);
+   start = content.indexOf(range.start);
 
    if (start !== -1)
     {
-     end = input.indexOf(range.end, start);
+     end = content.indexOf(range.end, start);
 
      if (end !== -1)
       {
        res = { "type": range.name,
-               "start": start,
-               "end": end + range.end.length
+               "start": token.start + start,
+               "end": token.start + end + range.end.length
              };
       }
     }
