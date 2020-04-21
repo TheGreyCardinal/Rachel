@@ -19,8 +19,8 @@
 /* В данном случае, описан синтаксис комментария.
 */
  var rule_range = { "type": "range",
-                    "start": "/",
-                    "end": "/",
+                    "start": "/*",
+                    "end": "*/",
                     "name": "comment"
                   };
 
@@ -258,5 +258,38 @@
      j = undefined;
     }
    i = undefined;
+  }
+
+
+/* Берёт исходную строку, дерево токенов и массив правил оформления.
+
+   Возвращает оформленную строку.
+
+   Правила оформления - объект { "token_type": "decorate_class"].
+*/
+ function decor(input, tree, decor_rules)
+  {
+   var res = "";
+
+   for (var i = 0; i < tree.length; i++)
+    {
+     var content = input.substring(tree[i].start, tree[i].end + 1);
+
+     content = content.replace(/</g, "&lt;");
+     content = content.replace(/>/g, "&gt;");
+     content = content.replace(/\"/g, "&#34;");
+     content = content.replace(/\'/g, "&#39;");
+
+     if (typeof decor_rules[tree[i].type] !== "undefined")
+      {
+       content = "<span class=\"" + decor_rules[tree[i].type]
+               + "\">" + content + "</span>";
+      }
+
+     res = res + content;
+    }
+   i = undefined;
+
+   return res;
   }
 
