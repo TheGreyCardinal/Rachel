@@ -130,6 +130,7 @@
    return res;
   }
 
+
 /* Вставляет найденный токен в дерево.
 
    tree - массив объектов.
@@ -206,6 +207,55 @@
    for (var i = 0; i < res.length; i++)
     {
      tree.splice(old_token + i, 0, res[i]);
+    }
+   i = undefined;
+  }
+
+
+/* Применяет правила разбра к необработанному токену (type: raw).
+
+   На вход принимает массив объектов-правил и дерево.
+   Изменяет дерево, ничего не возвращает.
+*/
+ function apply_rules(input, tree, rules)
+  {
+   for (var i = 0; i < rules.length; i++)
+    {
+     var rule = rules[i];
+     var func;
+
+     switch (rule.type)
+      {
+       case "range":
+         func = get_range;
+
+         break;
+
+       case "line":
+         func = get_line;
+
+         break;
+      }
+
+     for (var j = 0; j < tree.length; j++)
+      {
+       var token = tree[j];
+
+       if (token.type == "raw")
+        {
+         var find = func(input, token, rule);
+
+         if (find !== false)
+          {
+           insert_token(tree, j, find);
+          }
+        }
+       else
+        {
+         continue;
+        }
+      }
+     j = undefined;
     }
    i = undefined;
   }
