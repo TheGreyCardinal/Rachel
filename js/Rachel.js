@@ -91,15 +91,16 @@
 
    Если фрагмент не найден - возвращает false.
 */
- function get_line(input, line)
+ function get_line(input, token, line)
   {
    var start;
    var end;
+   var content = input.substring(token.start, token.end);
    var res = false;
 
    for (var i = 0; i < line.list.length; i++)
     {
-     var tmp = input.indexOf(line.list[i]);
+     var tmp = content.indexOf(line.list[i]);
 
      if (tmp !== -1)
       {
@@ -115,14 +116,14 @@
     {
      end = start;
 
-     while (line.list.indexOf(input[end + 1]) !== -1)
+     while (line.list.indexOf(content[end + 1]) !== -1)
       {
        end++;
       }
 
      res = { "type": line.name,
-             "start": start,
-             "end": end
+             "start": token.start + start,
+             "end": token.start + end
            };
     }
 
