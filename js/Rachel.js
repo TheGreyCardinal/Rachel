@@ -19,8 +19,8 @@
 /* В данном случае, описан синтаксис комментария.
 */
  var rule_range = { "type": "range",
-                    "start": "/*",
-                    "end": "*/",
+                    "start": "/",
+                    "end": "/",
                     "name": "comment"
                   };
 
@@ -38,20 +38,20 @@
   {
    var start;
    var end;
-   var content = input.substring(token.start, token.end);
+   var content = input.substring(token.start, token.end + 1);
    var res = false;
 
    start = content.indexOf(range.start);
 
    if (start !== -1)
     {
-     end = content.indexOf(range.end, start);
+     end = content.indexOf(range.end, start + 1);
 
      if (end !== -1)
       {
        res = { "type": range.name,
                "start": token.start + start,
-               "end": token.start + end + range.end.length
+               "end": token.start + end + range.end.length - 1
              };
       }
     }
@@ -95,7 +95,7 @@
   {
    var start;
    var end;
-   var content = input.substring(token.start, token.end);
+   var content = input.substring(token.start, token.end + 1);
    var res = false;
 
    for (var i = 0; i < line.list.length; i++)
@@ -151,7 +151,15 @@
      return false;
     }
 
-   if (old_start == insert_token.start)
+   if ((old_start == insert_token.start)
+        && (old_end == insert_token.end))
+    {
+     res.push({ "type": insert_token.type,
+                "start": old_start,
+                "end": old_end
+              })
+    }
+  else if (old_start == insert_token.start)
     {
      res.push({ "type": insert_token.type,
                 "start": insert_token.start,
