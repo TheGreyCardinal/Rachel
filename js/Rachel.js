@@ -25,41 +25,6 @@
                   };
 
 
-/* Находит первое вхождение диапазона range в строку, описываемую token.
-
-   Возвращает объект со следующими данными:
-    type - тип найденного фрагмента.
-    start - индекс первого символа из найденного фрагмента.
-    end - индекс последнего символа из найденного фрагмента.
-
-   Если фрагмент не найден - возвращает false.
-*/
- function get_range(input, token, range)
-  {
-   var start;
-   var end;
-   var content = input.substring(token.start, token.end + 1);
-   var res = false;
-
-   start = content.indexOf(range.start);
-
-   if (start !== -1)
-    {
-     end = content.indexOf(range.end, start + 1);
-
-     if (end !== -1)
-      {
-       res = { "type": range.name,
-               "start": token.start + start,
-               "end": token.start + end + range.end.length - 1
-             };
-      }
-    }
-
-   return res;
-  }
-
-
 /* Правило-линия.
    Описывает фрагмент из заданных символов.
 
@@ -80,55 +45,6 @@
                    "list": [" ", "\n", "\r", "\r\n", "\t"],
                    "name": "whitespace"
                  };
-
-
-/* Находит первое вхождение фрагмента из заданных символов.
-
-   Возвращает объект со следующими данными:
-    type - тип найденного фрагмента.
-    start - индекс первого символа из найденного фрагмента.
-    end - индекс последнего символа из найденного фрагмента.
-
-   Если фрагмент не найден - возвращает false.
-*/
- function get_line(input, token, line)
-  {
-   var start;
-   var end;
-   var content = input.substring(token.start, token.end + 1);
-   var res = false;
-
-   for (var i = 0; i < line.list.length; i++)
-    {
-     var tmp = content.indexOf(line.list[i]);
-
-     if (tmp !== -1)
-      {
-       if ((start > tmp) || (typeof start == "undefined"))
-        {
-         start = tmp;
-        }
-      }
-    }
-   i = undefined;
-
-   if (typeof start !== "undefined")
-    {
-     end = start;
-
-     while (line.list.indexOf(content[end + 1]) !== -1)
-      {
-       end++;
-      }
-
-     res = { "type": line.name,
-             "start": token.start + start,
-             "end": token.start + end
-           };
-    }
-
-   return res;
-  }
 
 
 /* Вставляет найденный токен в дерево.
@@ -222,25 +138,6 @@
    for (var i = 0; i < rules.length; i++)
     {
      var rule = rules[i];
-     var func;
-
-     switch (rule.type)
-      {
-       case "range":
-         func = get_range;
-
-         break;
-
-       case "line":
-         func = get_line;
-
-         break;
-
-       case "range_if":
-         func = get_range_if;
-
-         break;
-      }
 
      for (var j = 0; j < tree.length; j++)
       {
@@ -248,7 +145,7 @@
 
        if (token.type == "raw")
         {
-         var find = func(input, token, rule);
+         var find = rule_func(input, token, rule);
 
          if (find !== false)
           {
@@ -331,162 +228,274 @@
                        "start_pre": ["\\", false],
                        "end": "\"",
                        "end_pre": ["\\", false],
-                       "end_post": "",
                        "name": "string"
                      };
 
 
-/* Находит первое вхождение диапазона range в строку, описываемую token.
-   Дополнительно проверяются префиксы/суффиксы.
-
-   Возвращает объект со следующими данными:
-    type - тип найденного фрагмента.
-    start - индекс первого символа из найденного фрагмента.
-    end - индекс последнего символа из найденного фрагмента.
-
-   Если фрагмент не найден - возвращает false.
+/* Объект, группирующий функции обработки.
 */
- function get_range_if(input, token, range_if)
+ function rule_func(input, token, rule)
   {
-   var start;
-   var true_start;
-   var end;
-   var true_end;
-   var content = input.substring(token.start, token.end + 1);
    var res = false;
 
-   start = content.indexOf(range_if.start);
-
-   while (start !== -1)
+   switch (rule.type)
     {
-     true_start = check_range_point(content,
-                                    start,
-                                    range_if.start.length,
-                                    range_if.start_pre,
-                                    range_if.start_post
-                                   );
-     if (true_start)
-      {
+     case "range":
+       res = get_range(input, token, rule);
+
        break;
-      }
-     else
-      {
-       start = content.indexOf(range_if.start, start + 1);
-      }
-    }
 
-   if ((start !== -1) && (true_start))
-    {
-     end = content.indexOf(range_if.end, start + 1);
+     case "line":
+       res = get_line(input, token, rule);
 
-     while (end !== -1)
-      {
-       true_end = check_range_point(content,
-                                    end,
-                                    range_if.end.length,
-                                    range_if.end_pre,
-                                    range_if.end_post
-                                   );
-       if (true_end)
-        {
-         break;
-        }
-       else
-        {
-         end = content.indexOf(range_if.end, end + 1);
-        }
-      }
+       break;
 
-     if ((end !== -1) && (true_end))
-      {
-       res = { "type": range_if.name,
-               "start": token.start + start,
-               "end": token.start + end + range_if.end.length - 1
-             };
-      }
+     case "range_if":
+       res = get_range_if(input, token, rule);
+
+       break;
     }
 
    return res;
-  }
 
-/* Проверяет истинность найденного фрагмента, учитывая параметры
-   префиксов/суффиксов.
-*/
- function check_range_point(content, point_index, point_length, prefix, postfix)
-  {
-   var res = false;
-   var prefix_flag = true;
-   var postfix_flag = true;
 
-   if (prefix)
-    {
-     var pre_index = point_index - prefix[0].length;
+   /* Находит первое вхождение диапазона range в строку, описываемую token.
 
-     if (pre_index >= 0)
-      {
-       var pre_content = content.substring(pre_index, point_index);
+      Возвращает объект со следующими данными:
+       type - тип найденного фрагмента.
+       start - индекс первого символа из найденного фрагмента.
+       end - индекс последнего символа из найденного фрагмента.
 
-       if (prefix[1] == false)
-        {
-         if (pre_content == prefix[0])
-          {
-           prefix_flag = false;
-          }
-        }
-       else
-        {
-         if (pre_content !== prefix[0])
-          {
-           prefix_flag = false;
-          }
-        }
-      }
-     else
-      {
-       if (prefix[1])
-        {
-         prefix_flag = false;
-        }
-      }
-    }
+      Если фрагмент не найден - возвращает false.
+   */
+    function get_range(input, token, range)
+     {
+      var start;
+      var end;
+      var content = input.substring(token.start, token.end + 1);
+      var res = false;
 
-   if (postfix)
-    {
-     var post_index = point_index + point_length;
+      start = content.indexOf(range.start);
 
-     if (post_index + postfix[0].length <= content.length)
-      {
-       var post_content = content.substring(post_index, post_index + postfix[0].length);
+      if (start !== -1)
+       {
+        end = content.indexOf(range.end, start + 1);
 
-       if (postfix[1] == false)
-        {
-         if (post_content == postfix[0])
-          {
-           postfix_flag = false;
-          }
-        }
-       else
-        {
-         if (post_content !== postfix[0])
-          {
-           postfix_flag = false;
-          }
-        }
-      }
-     else
-      {
-       if (postfix[1])
-        {
-         postfix_flag = false;
-        }
-      }
-    }
+        if (end !== -1)
+         {
+          res = { "type": range.name,
+                  "start": token.start + start,
+                  "end": token.start + end + range.end.length - 1
+                };
+         }
+       }
 
-   if ((prefix_flag) && (postfix_flag))
-    {
-     res = true;
-    }
+      return res;
+     }
 
-   return res;
+
+   /* Находит первое вхождение фрагмента из заданных символов.
+
+      Возвращает объект со следующими данными:
+       type - тип найденного фрагмента.
+       start - индекс первого символа из найденного фрагмента.
+       end - индекс последнего символа из найденного фрагмента.
+
+      Если фрагмент не найден - возвращает false.
+   */
+    function get_line(input, token, line)
+     {
+      var start;
+      var end;
+      var content = input.substring(token.start, token.end + 1);
+      var res = false;
+
+      for (var i = 0; i < line.list.length; i++)
+       {
+        var tmp = content.indexOf(line.list[i]);
+
+        if (tmp !== -1)
+         {
+          if ((start > tmp) || (typeof start == "undefined"))
+           {
+            start = tmp;
+           }
+         }
+       }
+      i = undefined;
+
+      if (typeof start !== "undefined")
+       {
+        end = start;
+
+        while (line.list.indexOf(content[end + 1]) !== -1)
+         {
+          end++;
+         }
+
+        res = { "type": line.name,
+                "start": token.start + start,
+                "end": token.start + end
+              };
+       }
+
+      return res;
+     }
+
+
+   /* Находит первое вхождение диапазона range в строку, описываемую token.
+      Дополнительно проверяются префиксы/суффиксы.
+
+      Возвращает объект со следующими данными:
+       type - тип найденного фрагмента.
+       start - индекс первого символа из найденного фрагмента.
+       end - индекс последнего символа из найденного фрагмента.
+
+      Если фрагмент не найден - возвращает false.
+   */
+    function get_range_if(input, token, range_if)
+     {
+      var start;
+      var true_start;
+      var end;
+      var true_end;
+      var content = input.substring(token.start, token.end + 1);
+      var res = false;
+
+      start = content.indexOf(range_if.start);
+
+      while (start !== -1)
+       {
+        true_start = check_range_point(content,
+                                       start,
+                                       range_if.start.length,
+                                       range_if.start_pre,
+                                       range_if.start_post
+                                      );
+        if (true_start)
+         {
+          break;
+         }
+        else
+         {
+          start = content.indexOf(range_if.start, start + 1);
+         }
+       }
+
+      if ((start !== -1) && (true_start))
+       {
+        end = content.indexOf(range_if.end, start + 1);
+
+        while (end !== -1)
+         {
+          true_end = check_range_point(content,
+                                       end,
+                                       range_if.end.length,
+                                       range_if.end_pre,
+                                       range_if.end_post
+                                      );
+          if (true_end)
+           {
+            break;
+           }
+          else
+           {
+            end = content.indexOf(range_if.end, end + 1);
+           }
+         }
+
+        if ((end !== -1) && (true_end))
+         {
+          res = { "type": range_if.name,
+                  "start": token.start + start,
+                  "end": token.start + end + range_if.end.length - 1
+                };
+         }
+       }
+
+      return res;
+     }
+
+
+   /* Проверяет истинность найденного фрагмента, учитывая параметры
+      префиксов/суффиксов.
+   */
+    function check_range_point(content, point_index, point_length, prefix, postfix)
+     {
+      var res = false;
+      var prefix_flag = true;
+      var postfix_flag = true;
+
+      if (prefix)
+       {
+        var pre_index = point_index - prefix[0].length;
+
+        if (pre_index >= 0)
+         {
+          var pre_content = content.substring(pre_index, point_index);
+
+          if (prefix[1] == false)
+           {
+            if (pre_content == prefix[0])
+             {
+              prefix_flag = false;
+             }
+           }
+          else
+           {
+            if (pre_content !== prefix[0])
+             {
+              prefix_flag = false;
+             }
+           }
+         }
+        else
+         {
+          if (prefix[1])
+           {
+            prefix_flag = false;
+           }
+         }
+       }
+
+      if (postfix)
+       {
+        var post_index = point_index + point_length;
+
+        if (post_index + postfix[0].length <= content.length)
+         {
+          var post_content = content.substring(post_index, post_index + postfix[0].length);
+
+          if (postfix[1] == false)
+           {
+            if (post_content == postfix[0])
+             {
+              postfix_flag = false;
+             }
+           }
+          else
+           {
+            if (post_content !== postfix[0])
+             {
+              postfix_flag = false;
+             }
+           }
+         }
+        else
+         {
+          if (postfix[1])
+           {
+            postfix_flag = false;
+           }
+         }
+       }
+
+      if ((prefix_flag) && (postfix_flag))
+       {
+        res = true;
+       }
+
+      return res;
+     }
   }
 
