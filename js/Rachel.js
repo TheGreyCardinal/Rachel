@@ -235,6 +235,11 @@
          func = get_line;
 
          break;
+
+       case "range_if":
+         func = get_range_if;
+
+         break;
       }
 
      for (var j = 0; j < tree.length; j++)
@@ -289,6 +294,198 @@
      res = res + content;
     }
    i = undefined;
+
+   return res;
+  }
+
+
+/* Сложное правило-диапазон.
+   Описывает фрагмент от начальной до конечной подстроки, включительно.
+   При этом проверяются условия префиксов/суффиксов для начальной и конечной
+   подстрок.
+
+   Пример:
+    Входная строка: 12321014.
+    Начальная подстрока: 2.
+    Префикс начальной строки: [3, true]
+    Суффикс начальной строки: [2, true]
+    Конечная подстрока: 1.
+    Префикс конечной строки: [2, false].
+    Суффикс конечной строки: [4, false]
+    Описываемый фрагмент: 2101.
+     Т.к. проверяются префиксы/суффиксы, то правило сработает на второй 2
+     и третьей 1 исходной строки.
+    Также, префиксы/суффиксы указывают, должны ли они присутствовать или нет.
+
+   Структура:
+    type - тип правила, обязателен для всех правил.
+    start - начало диапазона.
+    end - конец диапазона.
+    name - метка для найденного фрагмента.
+*/
+
+/* В данном случае, описан синтаксис комментария.
+*/
+ var rule_range_if = { "type": "range_if",
+                       "start": "\"",
+                       "start_pre": ["\\", false],
+                       "end": "\"",
+                       "end_pre": ["\\", false],
+                       "end_post": "",
+                       "name": "string"
+                     };
+
+
+/* Находит первое вхождение диапазона range в строку, описываемую token.
+   Дополнительно проверяются префиксы/суффиксы.
+
+   Возвращает объект со следующими данными:
+    type - тип найденного фрагмента.
+    start - индекс первого символа из найденного фрагмента.
+    end - индекс последнего символа из найденного фрагмента.
+
+   Если фрагмент не найден - возвращает false.
+*/
+ function get_range_if(input, token, range_if)
+  {
+   var start;
+   var true_start;
+   var end;
+   var true_end;
+   var content = input.substring(token.start, token.end + 1);
+   var res = false;
+
+   start = content.indexOf(range_if.start);
+
+   while (start !== -1)
+    {
+     true_start = check_range_point(content,
+                                    start,
+                                    range_if.start.length,
+                                    range_if.start_pre,
+                                    range_if.start_post
+                                   );
+     if (true_start)
+      {
+       break;
+      }
+     else
+      {
+       start = content.indexOf(range_if.start, start + 1);
+      }
+    }
+
+   if ((start !== -1) && (true_start))
+    {
+     end = content.indexOf(range_if.end, start + 1);
+
+     while (end !== -1)
+      {
+       true_end = check_range_point(content,
+                                    end,
+                                    range_if.end.length,
+                                    range_if.end_pre,
+                                    range_if.end_post
+                                   );
+       if (true_end)
+        {
+         break;
+        }
+       else
+        {
+         end = content.indexOf(range_if.end, end + 1);
+        }
+      }
+
+     if ((end !== -1) && (true_end))
+      {
+       res = { "type": range_if.name,
+               "start": token.start + start,
+               "end": token.start + end + range_if.end.length - 1
+             };
+      }
+    }
+
+   return res;
+  }
+
+/* Проверяет истинность найденного фрагмента, учитывая параметры
+   префиксов/суффиксов.
+*/
+ function check_range_point(content, point_index, point_length, prefix, postfix)
+  {
+   var res = false;
+   var prefix_flag = true;
+   var postfix_flag = true;
+
+   if (prefix)
+    {
+     var pre_index = point_index - prefix[0].length;
+
+     if (pre_index >= 0)
+      {
+       var pre_content = content.substring(pre_index, point_index);
+
+       if (prefix[1] == false)
+        {
+         if (pre_content == prefix[0])
+          {
+           prefix_flag = false;
+          }
+        }
+       else
+        {
+         if (pre_content !== prefix[0])
+          {
+           prefix_flag = false;
+          }
+        }
+      }
+     else
+      {
+       if (prefix[1])
+        {
+         prefix_flag = false;
+        }
+      }
+    }
+
+   if (postfix)
+    {
+     var post_index = point_index + point_length;
+
+     if (post_index + postfix[0].length <= content.length)
+      {
+       var post_content = content.substring(post_index, post_index + postfix[0].length);
+
+       if (postfix[1] == false)
+        {
+         if (post_content == postfix[0])
+          {
+           postfix_flag = false;
+          }
+        }
+       else
+        {
+         if (post_content !== postfix[0])
+          {
+           postfix_flag = false;
+          }
+        }
+      }
+     else
+      {
+       if (postfix[1])
+        {
+         postfix_flag = false;
+        }
+      }
+    }
+
+   if ((prefix_flag) && (postfix_flag))
+    {
+     res = true;
+    }
 
    return res;
   }
