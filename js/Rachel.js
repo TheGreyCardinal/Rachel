@@ -254,6 +254,11 @@
        res = get_range_if(input, token, rule);
 
        break;
+
+     case "rival":
+       res = get_rival(input, token, rule);
+
+       break;
     }
 
    return res;
@@ -519,5 +524,80 @@
 
       return res;
      }
+
+
+   /* Применяет равнозначные/конфликтующие правила, отдавая приоритет
+      первому сработавшему.
+   */
+   function get_rival(input, token, rival)
+    {
+     var res = false;
+     var pre_res = [];
+     var pre_res_min = 0;
+
+     for (var i = 0; i < rival.rules.length; i++)
+      {
+       var rule = rival.rules[i];
+       var tmp_res;
+
+       switch (rule.type)
+        {
+         case "range":
+           tmp_res = get_range(input, token, rule);
+
+           break;
+
+         case "line":
+           tmp_res = get_line(input, token, rule);
+
+           break;
+
+         case "range_if":
+           tmp_res = get_range_if(input, token, rule);
+
+           break;
+        }
+
+       if (tmp_res)
+        {
+         pre_res.push(tmp_res);
+
+         if (pre_res[pre_res_min].start > tmp_res.start)
+          {
+           pre_res_min = pre_res.length - 1;
+          }
+        }
+      }
+     i = undefined;
+
+     if (pre_res.length > 0)
+      {
+       res = pre_res[pre_res_min];
+      }
+
+     return res;
+    }
   }
 
+ var rule_rival = { "type": "rival",
+                    "rules": [ { "type": "range_if",
+                                 "start": "\"",
+                                 "start_pre": ["\\", false],
+                                 "end": "\"",
+                                 "end_pre": ["\\", false],
+                                 "name": "string"
+                               },
+                               { "type": "range_if",
+                                 "start": "'",
+                                 "start_pre": ["\\", false],
+                                 "end": "'",
+                                 "end_pre": ["\\", false],
+                                 "name": "stringt",
+                               },
+                               { "type": "range",
+                                 "start": "/*",
+                                 "end": "*/",
+                                 "name": "comment"
+                               }
+                             ]
+                   };
