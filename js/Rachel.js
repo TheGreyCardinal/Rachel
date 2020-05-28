@@ -272,6 +272,7 @@
      {
       var start;
       var end;
+      var strict = range.strict || false;
       var content = input.substring(token.start, token.end + 1);
       var res = false;
 
@@ -287,6 +288,16 @@
                   "start": token.start + start,
                   "end": token.start + end + range.end.length - 1
                 };
+         }
+        else
+         {
+          if (!strict)
+           {
+            res = { "type": range.name,
+                    "start": token.start + start,
+                    "end": token.end
+                  };
+           }
          }
        }
 
@@ -360,6 +371,7 @@
       var end;
       var true_end;
       var content = input.substring(token.start, token.end + 1);
+      var strict = range_if.strict || false;
       var res = false;
 
       start = content.indexOf(range_if.start);
@@ -410,6 +422,16 @@
                   "start": token.start + start,
                   "end": token.start + end + range_if.end.length - 1
                 };
+         }
+        else
+         {
+          if (!strict)
+           {
+            res = { "type": range_if.name,
+                    "start": token.start + start,
+                    "end": token.end
+                  };
+           }
          }
        }
 
