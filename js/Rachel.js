@@ -601,3 +601,16 @@
                                }
                              ]
                    };
+
+
+/* Собирает обработанное дерево - добавляет содержимое в каждый узел.
+*/
+ function build_tree(input, tree)
+  {
+   for (var i = 0; i < tree.length; i++)
+    {
+     tree[i].content = input.substring(tree[i].start, tree[i].end + 1);
+    }
+   i = undefined;
+  }
+
