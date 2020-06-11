@@ -704,3 +704,14 @@ var chain_rule = [{ "chain_type": "class_name",
                   }
                  ];
 
+/* Сортирует найденные цепочки. */
+ function sort_chain(chain_list)
+  {
+   chain_list.sort(function (a, b)
+                    {
+                     var res = a.start - b.start;
+
+                     return res;
+                    });
+  }
+
