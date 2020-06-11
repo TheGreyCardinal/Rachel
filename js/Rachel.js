@@ -616,67 +616,67 @@
 
 /* Ищет последовательность токенов.
 */
- function get_chain(tree, chain_rule)
+ function get_chain(tree, chain_rule_list)
   {
    var res = [];
-   var chain = chain_rule.chain;
 
-   var real_chain_len = 0;
-
-   for (var i = 0; i < chain.length; i++)
+   for (var k = 0; k < chain_rule_list.length; k++)
     {
-     if (typeof chain[i].unimportant == "undefined")
+     var chain = chain_rule_list[k].chain;
+     var real_chain_len = 0;
+
+     for (var i = 0; i < chain.length; i++)
       {
-       real_chain_len++;
-      }
-    }
-   i = undefined;
-
-   if (tree.length < real_chain_len)
-    {
-     return false;
-    }
-
-   for (var i = 0; i <= (tree.length - real_chain_len); i++)
-    {
-     var found = 0;
-     var shift = 0;
-
-     for (var j = 0; j < chain.length; j++)
-      {
-       if (chain[j].type == tree[i + j - shift].type)
+       if (typeof chain[i].unimportant == "undefined")
         {
-         if ((typeof chain[j].content == "undefined")
-            || (chain[j].content == tree[i + j - shift].content))
+         real_chain_len++;
+        }
+      }
+     i = undefined;
+
+     if (tree.length < real_chain_len)
+      {
+       return false;
+      }
+
+     for (var i = 0; i <= (tree.length - real_chain_len); i++)
+      {
+       var found = 0;
+       var shift = 0;
+
+       for (var j = 0; j < chain.length; j++)
+        {
+         if (chain[j].type == tree[i + j - shift].type)
           {
-           found++;
+           if ((typeof chain[j].content == "undefined")
+              || (chain[j].content == tree[i + j - shift].content))
+            {
+             found++;
+            }
+          }
+         else if (chain[j].unimportant)
+          {
+           shift++;
+          }
+         else
+          {
+           break;
           }
         }
-       else if (chain[j].unimportant)
+       j = undefined;
+
+       if (found == chain.length - shift)
         {
-         shift++;
-        }
-       else
-        {
-         break;
+         res.push({ "chain_type": chain_rule.chain_type,
+                    "start": i,
+                    "len": chain.length - shift
+                  });
+         i = i + chain.length - shift;
         }
       }
-     j = undefined;
-
-
-
-     if (found == chain.length - shift)
-      {
-       res.push({ "chain_type": chain_rule.chain_type,
-                  "start": i,
-                  "len": chain.length - shift
-                });
-       i = i + chain.length - shift;
-      }
+     i = undefined;
     }
-   i = undefined;
-
-
+   k = undefined;
 
    if (res.length == 0)
     {
@@ -686,16 +686,21 @@
    return res;
   }
 
-var chain_rule = { "chain_type": "class_name",
-                   "chain": [{ "type": "delimiter",
-                               "content": "."
-                             },
-                             {
-                              "type": "whitespace",
-                              "unimportant": true
-                             },
-                             { "type": "raw"
-                             }
-                            ]
-                 };
+var chain_rule = [{ "chain_type": "class_name",
+                    "chain": [{ "type": "delimiter",
+                                "content": "."
+                              },
+                              { "type": "raw"
+                              }
+                             ]
+                  },
+                  { "chain_type": "id_name",
+                    "chain": [{ "type": "delimiter",
+                                "content": "#"
+                              },
+                              { "type": "raw"
+                              }
+                             ]
+                  }
+                 ];
 
