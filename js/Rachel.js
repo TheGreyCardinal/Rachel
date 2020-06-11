@@ -76,7 +76,7 @@
                 "end": old_end
               })
     }
-  else if (old_start == insert_token.start)
+   else if (old_start == insert_token.start)
     {
      res.push({ "type": insert_token.type,
                 "start": insert_token.start,
@@ -613,4 +613,89 @@
     }
    i = undefined;
   }
+
+/* Ищет последовательность токенов.
+*/
+ function get_chain(tree, chain_rule)
+  {
+   var res = [];
+   var chain = chain_rule.chain;
+
+   var real_chain_len = 0;
+
+   for (var i = 0; i < chain.length; i++)
+    {
+     if (typeof chain[i].unimportant == "undefined")
+      {
+       real_chain_len++;
+      }
+    }
+   i = undefined;
+
+   if (tree.length < real_chain_len)
+    {
+     return false;
+    }
+
+   for (var i = 0; i <= (tree.length - real_chain_len); i++)
+    {
+     var found = 0;
+     var shift = 0;
+
+     for (var j = 0; j < chain.length; j++)
+      {
+       if (chain[j].type == tree[i + j - shift].type)
+        {
+         if ((typeof chain[j].content == "undefined")
+            || (chain[j].content == tree[i + j - shift].content))
+          {
+           found++;
+          }
+        }
+       else if (chain[j].unimportant)
+        {
+         shift++;
+        }
+       else
+        {
+         break;
+        }
+      }
+     j = undefined;
+
+
+
+     if (found == chain.length - shift)
+      {
+       res.push({ "chain_type": chain_rule.chain_type,
+                  "start": i,
+                  "len": chain.length - shift
+                });
+       i = i + chain.length - shift;
+      }
+    }
+   i = undefined;
+
+
+
+   if (res.length == 0)
+    {
+     return false;
+    }
+
+   return res;
+  }
+
+var chain_rule = { "chain_type": "class_name",
+                   "chain": [{ "type": "delimiter",
+                               "content": "."
+                             },
+                             {
+                              "type": "whitespace",
+                              "unimportant": true
+                             },
+                             { "type": "raw"
+                             }
+                            ]
+                 };
 
